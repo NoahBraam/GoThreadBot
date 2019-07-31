@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/NoahBraam/GoThreadBot/commands"
+	"github.com/NoahBraam/GoThreadBot/utils"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -42,14 +42,24 @@ func main() {
 }
 
 func setupHandlers(sess *discordgo.Session) {
-	fmt.Printf("Setup.")
+	fmt.Println("Setup.")
 	sess.AddHandler(messageHandler)
+	sess.AddHandler(reactionHandler)
 }
 
 func messageHandler(sess *discordgo.Session, evt *discordgo.MessageCreate) {
 	message := evt.Message
 	switch strings.ToLower(strings.TrimSpace(message.Content)) {
 	case "~help":
-		commands.HelpCommand(sess, message)
+		utils.HelpCommand(sess, message)
 	}
+}
+
+func reactionHandler(sess *discordgo.Session, evt *discordgo.MessageReactionAdd) {
+	reaction := evt.MessageReaction
+	if name := reaction.Emoji.Name; name == "thread" {
+		// Handle new thread channel
+		utils.HandleThreadReaction(sess, reaction)
+	}
+
 }
