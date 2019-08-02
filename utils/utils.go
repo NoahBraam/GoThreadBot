@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+
 	dg "github.com/bwmarrin/discordgo"
 )
 
@@ -14,15 +16,24 @@ func HelpCommand(sess *dg.Session, msg *dg.Message) {
 
 // HandleThreadReaction handles a reaction of ':thread:' to a message
 func HandleThreadReaction(sess *dg.Session, reaction *dg.MessageReaction) {
+	roleAndChannelName := "thread-" + reaction.MessageID
 	// Check if thread-specific role exists
-
+	createThreadSpecificRole(sess, roleAndChannelName, reaction.GuildID)
 	// Check if channel exists
-
+	createThreadSpecificChannel(sess, roleAndChannelName, reaction.GuildID)
 	// Give user correct role
 }
 
-// This function create the specific role for this thread channel
-func createThreadSpecificRole(sess *dg.Session, react *dg.MessageReaction) {
+// This function creates the specific role for viewing the thread
+func createThreadSpecificRole(sess *dg.Session, roleName, guild string) {
+	fmt.Println(roleName, guild)
+}
+
+// This function creates the specific channel for this thread
+func createThreadSpecificChannel(sess *dg.Session, channelName, guild string) {
+	//TODO: Check if exists first...
+
+	sess.GuildChannelCreate(guild, channelName, dg.ChannelTypeGuildText)
 }
 
 func sendMessage(sess *dg.Session, channelid string, message string) error {
