@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"fmt"
-
 	dg "github.com/bwmarrin/discordgo"
 )
 
@@ -25,14 +23,28 @@ func HandleThreadReaction(sess *dg.Session, reaction *dg.MessageReaction) {
 }
 
 // This function creates the specific role for viewing the thread
-func createThreadSpecificRole(sess *dg.Session, roleName, guild string) {
-	fmt.Println(roleName, guild)
+func createThreadSpecificRole(sess *dg.Session, roleName, guild string) string {
+	guildRoles, _ := sess.GuildRoles(guild)
+	for _, role := range guildRoles {
+		if role.Name == roleName {
+			return ""
+		}
+	}
+	newRole, _ := sess.GuildRoleCreate(guild)
+	newRole, _ = sess.GuildRoleEdit(guild, newRole.ID, roleName, 0, false, 0, false)
+	return newRole.ID
 }
 
 // This function creates the specific channel for this thread
 func createThreadSpecificChannel(sess *dg.Session, channelName, guild string) {
-	//TODO: Check if exists first...
-
+	channels, _ := sess.GuildChannels(guild)
+	for _, channel := range channels {
+		if channel.Name == channelName {
+			return
+		}
+	}
+	// TODO: permission set for @everyone so they can't read or write
+	// and that specific role can read and write.
 	sess.GuildChannelCreate(guild, channelName, dg.ChannelTypeGuildText)
 }
 
