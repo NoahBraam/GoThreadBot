@@ -4,6 +4,9 @@ import (
 	dg "github.com/bwmarrin/discordgo"
 )
 
+// View channel && Send messages permission
+var permissions = 0x400 | 0x800
+
 // HelpCommand is the command to display help message
 func HelpCommand(sess *dg.Session, msg *dg.Message) {
 	messageStr := mentionUser(msg) + ", hi I'm ThreadBot!"
@@ -16,9 +19,9 @@ func HelpCommand(sess *dg.Session, msg *dg.Message) {
 func HandleThreadReaction(sess *dg.Session, reaction *dg.MessageReaction) {
 	roleAndChannelName := "thread-" + reaction.MessageID
 	// Check if thread-specific role exists
-	createThreadSpecificRole(sess, roleAndChannelName, reaction.GuildID)
+	roleID := createThreadSpecificRole(sess, roleAndChannelName, reaction.GuildID)
 	// Check if channel exists
-	createThreadSpecificChannel(sess, roleAndChannelName, reaction.GuildID)
+	createThreadSpecificChannel(sess, roleAndChannelName, reaction.GuildID, roleID)
 	// Give user correct role
 }
 
@@ -27,16 +30,16 @@ func createThreadSpecificRole(sess *dg.Session, roleName, guild string) string {
 	guildRoles, _ := sess.GuildRoles(guild)
 	for _, role := range guildRoles {
 		if role.Name == roleName {
-			return ""
+			return role.ID
 		}
 	}
 	newRole, _ := sess.GuildRoleCreate(guild)
-	newRole, _ = sess.GuildRoleEdit(guild, newRole.ID, roleName, 0, false, 0, false)
+	newRole, _ = sess.GuildRoleEdit(guild, newRole.ID, roleName, 0, false, permissions, false)
 	return newRole.ID
 }
 
 // This function creates the specific channel for this thread
-func createThreadSpecificChannel(sess *dg.Session, channelName, guild string) {
+func createThreadSpecificChannel(sess *dg.Session, channelName, guild, roleID string) {
 	channels, _ := sess.GuildChannels(guild)
 	for _, channel := range channels {
 		if channel.Name == channelName {
@@ -45,7 +48,20 @@ func createThreadSpecificChannel(sess *dg.Session, channelName, guild string) {
 	}
 	// TODO: permission set for @everyone so they can't read or write
 	// and that specific role can read and write.
-	sess.GuildChannelCreate(guild, channelName, dg.ChannelTypeGuildText)
+	newChannel, _ := sess.GuildChannelCreate(guild, channelName, dg.ChannelTypeGuildText)
+	everyonePermission := &dg.PermissionOverwrite{
+		ID:   guild,
+		Type: "role",
+		Deny: permissions}
+	rolePermission := &dg.PermissionOverwrite{
+		ID:    roleID,
+		Type:  "role",
+		Allow: permissions}
+
+	channelEdit := &dg.ChannelEdit{}
+	channelEdit.PermissionOverwrites = append(channelEdit.PermissionOverwrites, everyonePermission)
+	channelEdit.PermissionOverwrites = append(channelEdit.PermissionOverwrites, rolePermission)
+	sess.ChannelEditComplex(newChannel.ID, channelEdit)
 }
 
 func sendMessage(sess *dg.Session, channelid string, message string) error {
