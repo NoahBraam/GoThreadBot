@@ -23,6 +23,15 @@ func HandleThreadReaction(sess *dg.Session, reaction *dg.MessageReaction) {
 	// Check if channel exists
 	createThreadSpecificChannel(sess, roleAndChannelName, reaction.GuildID, roleID)
 	// Give user correct role
+	addRoleToUser(sess, reaction, roleID)
+}
+
+func addRoleToUser(sess *dg.Session, react *dg.MessageReaction, roleID string) {
+	member, _ := sess.GuildMember(react.GuildID, react.UserID)
+	roles := member.Roles
+	roles = append(roles, roleID)
+
+	sess.GuildMemberEdit(react.GuildID, react.UserID, roles)
 }
 
 // This function creates the specific role for viewing the thread
