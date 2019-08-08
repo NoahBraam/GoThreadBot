@@ -45,6 +45,7 @@ func setupHandlers(sess *discordgo.Session) {
 	fmt.Println("Setup.")
 	sess.AddHandler(messageHandler)
 	sess.AddHandler(reactionHandler)
+	sess.AddHandler(reactionRemovedHandler)
 }
 
 func messageHandler(sess *discordgo.Session, evt *discordgo.MessageCreate) {
@@ -61,5 +62,12 @@ func reactionHandler(sess *discordgo.Session, evt *discordgo.MessageReactionAdd)
 		// Handle new thread channel
 		utils.HandleThreadReaction(sess, reaction)
 	}
+}
 
+func reactionRemovedHandler(sess *discordgo.Session, evt *discordgo.MessageReactionRemove) {
+	reaction := evt.MessageReaction
+	if name := reaction.Emoji.Name; name == "thread" {
+		// Handle removing thread reaction
+		utils.HandleReactionRemoved(sess, reaction)
+	}
 }

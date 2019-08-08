@@ -26,6 +26,31 @@ func HandleThreadReaction(sess *dg.Session, reaction *dg.MessageReaction) {
 	addRoleToUser(sess, reaction, roleID)
 }
 
+// HandleReactionRemoved handles when the thread reaction gets removed
+func HandleReactionRemoved(sess *dg.Session, reaction *dg.MessageReaction) {
+	threadName := "thread-" + reaction.MessageID
+
+	guildRoles, _ := sess.GuildRoles(reaction.GuildID)
+
+	var roleID string
+	for _, role := range guildRoles {
+		if role.Name == threadName {
+			roleID = role.ID
+		}
+	}
+
+	member, _ := sess.GuildMember(reaction.GuildID, reaction.UserID)
+	roles := member.Roles
+	var newRoles []string
+	for _, role := range roles {
+		if roleID != role {
+			newRoles = append(newRoles, role)
+		}
+	}
+
+	sess.GuildMemberEdit(reaction.GuildID, reaction.UserID, newRoles)
+}
+
 func addRoleToUser(sess *dg.Session, react *dg.MessageReaction, roleID string) {
 	member, _ := sess.GuildMember(react.GuildID, react.UserID)
 	roles := member.Roles
